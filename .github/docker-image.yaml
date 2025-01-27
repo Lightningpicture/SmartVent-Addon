@@ -1,0 +1,39 @@
+name: Build and Deploy SmartVent Docker Image
+
+on:
+  push:
+    branches:
+      - main  # Der CI/CD-Prozess wird bei Pushes auf den `main`-Branch ausgelöst.
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # Läuft auf der neuesten Ubuntu-Version
+
+    steps:
+    # Schritt 1: Checke das Repository aus
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    # Schritt 2: Setze Docker Buildx für die Multi-Architektur-Unterstützung auf
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    # Schritt 3: Melde dich bei Docker Hub an
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}  # Docker Hub Benutzername aus GitHub Secrets
+        password: ${{ secrets.DOCKER_PASSWORD }}  # Docker Hub Passwort aus GitHub Secrets
+
+    # Schritt 4: Baue das Docker-Image und pushe es zu Docker Hub
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v2
+      with:
+        context: .  # Der Kontext ist das Verzeichnis, in dem sich die Dockerfile befindet
+        push: true  # Das Bild wird nach dem Build zu Docker Hub gepusht
+        tags: lightningpicture/smartvent:latest  # Tag für das Docker-Image (kann angepasst werden)
+        cache-from: type=gha  # Zwischenspeicherung für schnelle Builds
+
+    # Schritt 5: Bestätigung, dass der Push erfolgreich war
+    - name: Verify the image push
+      run: echo "Docker image has been successfully pushed to Docker Hub."
