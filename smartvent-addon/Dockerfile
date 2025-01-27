@@ -16,4 +16,3 @@ EXPOSE 8088
 
 # Startet das Skript
 CMD ["python", "smartvent.py"]
-                
