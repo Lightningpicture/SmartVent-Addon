@@ -1,0 +1,58 @@
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f9;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+h1 {
+    color: #333;
+    font-size: 2.5em;
+}
+
+h2 {
+    font-size: 1.8em;
+    color: #4CAF50;
+}
+
+canvas {
+    background-color: #fff;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+#humidity, #temperature {
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.card {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+}
+
+.card-header {
+    background-color: #f5f5f5;
+    font-size: 1.2em;
+}
+
+.card-body {
+    background-color: #ffffff;
+}
+
+@media (max-width: 768px) {
+    h1 {
+        font-size: 2em;
+    }
+    h2 {
+        font-size: 1.5em;
+    }
+}
