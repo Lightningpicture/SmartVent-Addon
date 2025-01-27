@@ -32,7 +32,7 @@ jobs:
         context: ./smartvent-addon  # Hier geben wir den Ordner an, in dem sich die Dockerfile befindet
         dockerfile: ./smartvent-addon/Dockerfile  # Geben Sie den Pfad zur Dockerfile an
         push: true  # Das Bild wird nach dem Build zu Docker Hub gepusht
-        tags: lightningpicture/smartvent:init  # Tag für das Docker-Image (kann angepasst werden)
+        tags: lightningpicture/smartvent:init1  # Tag für das Docker-Image (kann angepasst werden)
         cache-from: type=gha  # Zwischenspeicherung für schnelle Builds
 
     # Schritt 5: Bestätigung, dass der Push erfolgreich war
