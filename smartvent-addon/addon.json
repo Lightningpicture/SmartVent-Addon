@@ -1,1 +1,44 @@
 
+{
+  "name": "SmartVent",
+  "version": "1.0.0",
+  "slug": "smartvent",
+  "description": "AI-powered ventilation control based on humidity, temperature, and weather.",
+  "startup": "application",
+  "boot": "auto",
+  "host_network": false,
+  "map": ["config:rw"],
+  "arch": ["amd64", "armv7", "aarch64"],
+  "options": {
+    "humidity_sensor_id": "sensor.humidity_livingroom",
+    "temperature_sensor_id": "sensor.temp_livingroom",
+    "brightness_sensor_id": "sensor.light_livingroom",
+    "heating_sensor_id": "sensor.heating",
+    "weather_station_id": "sensor.weather_station",
+    "person_sensor_id": "binary_sensor.person_livingroom",
+    "min_humidity": 60,
+    "max_humidity": 70,
+    "min_temperature": 18,
+    "max_temperature": 22,
+    "learn_rate": 0.01,
+    "port": 8088
+  },
+  "schema": {
+    "humidity_sensor_id": "str",
+    "temperature_sensor_id": "str",
+    "brightness_sensor_id": "str",
+    "heating_sensor_id": "str",
+    "weather_station_id": "str",
+    "person_sensor_id": "str",
+    "min_humidity": "int",
+    "max_humidity": "int",
+    "min_temperature": "int",
+    "max_temperature": "int",
+    "learn_rate": "float",
+    "port": "int"
+  },
+  "resources": [
+    "/data"
+  ]
+}
+                
