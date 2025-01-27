@@ -1,1 +1,73 @@
 
+{
+  "name": "SmartVent",
+  "version": "1.0.0",
+  "slug": "smartvent",
+  "description": "AI-powered ventilation control based on humidity, temperature, and weather.",
+  "startup": "application",
+  "boot": "auto",
+  "host_network": false,
+  "map": ["config:rw"],
+  "arch": ["amd64", "armv7", "aarch64"],
+  "options": {
+    "humidity_sensor_id": [
+      "sensor.pir_badezimmer_humidity",
+      "sensor.pir_gastewc_humidity",
+      "sensor.pir_hwr_humidity",
+      "sensor.pir_kuche_humidity"
+    ],
+    "temperature_sensor_id": [
+      "sensor.pir_badezimmer_air_temperature",
+      "sensor.pir_hwr_air_temperature",
+      "sensor.pir_kuche_air_temperature",
+      "sensor.pir_gastewc_air_temperature"
+    ],
+    "brightness_sensor_id": [],
+    "heating_sensor_id": [],
+    "weather_station_id": [
+      "sensor.tempest_st_00085320_absolute_humidity",
+      "sensor.tempest_st_00085320_humidity",
+      "sensor.tempest_st_00085320_illuminance",
+      "sensor.tempest_st_00085320_rain_rate",
+      "sensor.tempest_st_00085320_temperature"
+    ],
+    "person_sensor_id": [
+      "person.schatz",
+      "person.simon"
+    ],
+    "ventilation_id": [
+      "switch.lueftung_badezimmer",
+      "switch.lueftung_kuche"
+    ],
+    "min_humidity": 60,
+    "max_humidity": 70,
+    "min_temperature": 18,
+    "max_temperature": 22,
+    "learn_rate": 0.01,
+    "port": 8088,
+    "timeout": 10,
+    "autotrain": true,
+    "autotrain_cadence": "35 * * * *",
+    "startup_disable_all": false
+  },
+  "schema": {
+    "humidity_sensor_id": ["str"],
+    "temperature_sensor_id": ["str"],
+    "brightness_sensor_id": ["str"],
+    "heating_sensor_id": ["str"],
+    "weather_station_id": ["str"],
+    "person_sensor_id": ["str"],
+    "ventilation_id": ["str"],
+    "min_humidity": "int",
+    "max_humidity": "int",
+    "min_temperature": "int",
+    "max_temperature": "int",
+    "learn_rate": "float",
+    "port": "int",
+    "timeout": "int",
+    "autotrain": "bool",
+    "autotrain_cadence": "str",
+    "startup_disable_all": "bool"
+  },
+  "image": "lightningpicture/{arch}-smartvent-dev"
+}
