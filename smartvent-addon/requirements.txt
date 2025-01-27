@@ -1,7 +1,0 @@
-
-requests
-pandas
-scikit-learn
-numpy
-flask
-matplotlib
