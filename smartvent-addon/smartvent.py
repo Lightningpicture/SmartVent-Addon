@@ -1,4 +1,3 @@
-
 import requests
 import pandas as pd
 import numpy as np
@@ -6,23 +5,35 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import MinMaxScaler
 from flask import Flask, render_template, jsonify
 import logging
+import os
 
-# Configuration
-HA_IP = "http://192.168.x.x"  # Replace with Home Assistant's IP address
+# Flask App für das Webinterface
+app = Flask(__name__)
+
+# Konfiguration (dynamisch aus Home Assistant)
+HA_IP = os.getenv('HA_IP', 'http://homeassistant.local:8123')  # Ersetzt durch die IP-Adresse von Home Assistant
+PORT = 8088
 MIN_HUMIDITY = 60
 MAX_HUMIDITY = 70
 MIN_TEMPERATURE = 18
 MAX_TEMPERATURE = 22
 LEARN_RATE = 0.01
-PORT = 8088
 
-# Example for sensor-related data
+# Beispiel für Sensordaten
 humidity_data = []
 
-# Flask app for the web interface
-app = Flask(__name__)
+# Hole die Optionen für das Addon (dynamisch aus den Home Assistant Einstellungen)
+def get_addon_config():
+    try:
+        # Hole die Addon-Konfiguration (mit deinem Addon-Token)
+        response = requests.get(f'{HA_IP}/api/hassio/addons/config/{addon_slug}')
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Error fetching addon config: {e}")
+        return {}
 
-# Function to get sensor data
+# Funktion, um Sensordaten zu holen
 def get_sensor_data(sensor_id):
     try:
         response = requests.get(f'{HA_IP}/api/states/{sensor_id}', timeout=10)
@@ -32,7 +43,7 @@ def get_sensor_data(sensor_id):
         logging.error(f"Error fetching {sensor_id}: {e}")
         return None
 
-# Function to make a decision about ventilation (on or off)
+# Funktion zur Entscheidung, ob die Lüftung aktiviert werden soll
 def should_activate_ventilation(humidity, temperature, person_home):
     if humidity > MAX_HUMIDITY or (humidity > MIN_HUMIDITY and temperature > MAX_TEMPERATURE):
         return True
@@ -40,21 +51,33 @@ def should_activate_ventilation(humidity, temperature, person_home):
         return humidity > MIN_HUMIDITY
     return False
 
-# Main logic for learning and control
+# Hauptlogik für das Lernen und die Steuerung
 def ventilation_control(person_home):
-    humidity = get_sensor_data('sensor.humidity_livingroom')
-    temperature = get_sensor_data('sensor.temp_livingroom')
+    # Hole die dynamische Konfiguration
+    addon_config = get_addon_config()
+    
+    if not addon_config:
+        logging.error("Could not retrieve configuration for addon")
+        return
+
+    # Hole die Entitäten aus der Konfiguration
+    humidity_sensor_id = addon_config.get("humidity_sensor_id", ["sensor.humidity_livingroom"])[0]  # Standardwert für den Fall
+    temperature_sensor_id = addon_config.get("temperature_sensor_id", ["sensor.temp_livingroom"])[0]  # Standardwert
+
+    # Hole die Sensordaten
+    humidity = get_sensor_data(humidity_sensor_id)
+    temperature = get_sensor_data(temperature_sensor_id)
 
     if humidity is None or temperature is None:
         return
 
-    # Make a decision whether to activate the ventilation
+    # Entscheidet, ob die Lüftung aktiviert werden soll
     ventilation_on = should_activate_ventilation(humidity, temperature, person_home)
 
-    # Collect data for training
+    # Sammelt Daten für das Lernen
     humidity_data.append(humidity)
 
-    # Improve the model with machine learning
+    # Verbessert das Modell mit maschinellem Lernen
     if len(humidity_data) > 30:
         df = pd.DataFrame(humidity_data, columns=["humidity"])
         X = df[["humidity"]]
@@ -66,17 +89,16 @@ def ventilation_control(person_home):
         model = LogisticRegression()
         model.fit(X_scaled, y)
 
-        # Make prediction for the next data point
+        # Vorhersage für den nächsten Datenpunkt
         prediction = model.predict([scaler.transform([[humidity]])])
         logging.info(f"Ventilation {'On' if prediction[0] else 'Off'}")
 
-        # Control the ventilation unit
-        control_ventilation(prediction[0])
+        # Steuert die Lüftungseinheit
+        control_ventilation(prediction[0], addon_config)
 
-# Function to control the ventilation unit
-def control_ventilation(ventilation_on):
-    entity_ids = ["switch.lueftung_badezimmer", "switch.lueftung_kuche"]
-    for entity_id in entity_ids:
+# Funktion zur Steuerung der Lüftungseinheit
+def control_ventilation(ventilation_on, addon_config):
+    for entity_id in addon_config.get("ventilation_id", []):  # Hole dynamisch die Lüftungs-Entitäten
         try:
             action = 'turn_on' if ventilation_on else 'turn_off'
             response = requests.post(f'{HA_IP}/api/services/switch/{action}', json={"entity_id": entity_id})
@@ -85,20 +107,30 @@ def control_ventilation(ventilation_on):
         except requests.exceptions.RequestException as e:
             logging.error(f"Error controlling ventilation unit {entity_id}: {e}")
 
-# Web route for the frontend
+# Webroute für das Frontend
 @app.route('/')
 def index():
     return render_template('index.html')
 
 @app.route('/get_data')
 def get_data():
-    humidity = get_sensor_data('sensor.humidity_livingroom')
-    temperature = get_sensor_data('sensor.temp_livingroom')
+    # Hole die dynamische Konfiguration
+    addon_config = get_addon_config()
+
+    if not addon_config:
+        return jsonify({"error": "Configuration could not be retrieved"}), 500
+
+    humidity_sensor_id = addon_config.get("humidity_sensor_id", ["sensor.humidity_livingroom"])[0]
+    temperature_sensor_id = addon_config.get("temperature_sensor_id", ["sensor.temp_livingroom"])[0]
+
+    humidity = get_sensor_data(humidity_sensor_id)
+    temperature = get_sensor_data(temperature_sensor_id)
+
     if humidity is not None and temperature is not None:
         return jsonify({"humidity": humidity, "temperature": temperature, "humidity_data": humidity_data})
     return jsonify({"error": "Data could not be retrieved"}), 500
 
-# Start the Flask web server
+# Startet den Flask Webserver
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     app.run(port=PORT, host="0.0.0.0")
